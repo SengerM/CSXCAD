@@ -40,6 +40,7 @@ cimport CSXCAD.CSProperties
 cimport CSXCAD.CSPrimitives as c_CSPrimitives
 from CSXCAD.CSPrimitives import CSPrimitives
 from CSXCAD.Utilities import CheckNyDir
+from pathlib import Path
 
 def hex2color(color):
     if color.startswith('#'):
@@ -388,16 +389,28 @@ cdef class CSProperties:
         """
         return self.__CreatePrimitive(c_CSPrimitives.POLYHEDRON, **kw)
 
-    def AddPolyhedronReader(self, filename, **kw):
-        """ AddPolyhedronReader(filename, **kw)
+    def AddPolyhedronReader(self, file:Path, **kw)->CSPrimitives:
+        """Add a polyhedron from file to this property.
 
-        Add a polyhedron from file to this property.
+        Arguments
+        ---------
+        file:
+            The path to the file to add.
+
+        Returns
+        -------
+        primitive:
+            An object of type `CSPrimitives` with the primitive just created.
 
         See Also
         --------
         CSXCAD.CSPrimitives.CSPrimPolyhedronReader : See here for details on primitive arguments
         """
-        return self.__CreatePrimitive(c_CSPrimitives.POLYHEDRONREADER, filename=filename, **kw)
+        file = Path(file) # Make sure that whatever we receive can be interpreted as a path to a file.
+        if not file.is_file():
+            raise FileNotFoundError(f'`file` points to a file that does not exist. Received {repr(str(file))}, absolute path is {repr(str(file.resolve()))}. ')
+
+        return self.__CreatePrimitive(c_CSPrimitives.POLYHEDRONREADER, filename=str(file), **kw)
 
     def __CreatePrimitive(self, prim_type, **kw):
         pset = self.GetParameterSet()
